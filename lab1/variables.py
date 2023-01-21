@@ -121,7 +121,7 @@ print("Python is " + x)
 x = "awesome"
 
 
-
+#use of global for variables 
 def myfunc():
   global x
   x = "fantastic"
