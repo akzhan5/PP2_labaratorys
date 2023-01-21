@@ -15,7 +15,7 @@ if 5>2:
 #error: 
 if 5>2:
     print('Five is grater than two!')
-        print('Five is greater than two!')
+    print('Five is greater than two!')
 
 #variables
 x = 5
