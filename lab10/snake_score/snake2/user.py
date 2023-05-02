@@ -12,7 +12,7 @@ def user_inp(string):
 
     for_key_ex = '''CREATE TABLE score_and_level 
     (id SERIAL, 
-    username TEXT,
+    username TEXT ,
     score INT, 
     level INT, 
     CONSTRAINT fk_user 
@@ -24,14 +24,45 @@ def user_inp(string):
 
     insrt = '''INSERT INTO USERNAME(username) 
     VALUES(%s)
-    ON CONFLICT (username) DO NOTHING; '''
+    ON CONFLICT (username) DO UPDATE SELECT score, level FROM user_score; '''
 
     insrt2 = '''INSERT INTO USERSCORE_AND_LEVEL(username)
     VALUES(%s)'''
 
+    in_it = '''SELECT username, score, level FROM user_score WHERE username = %s''' 
+
+
+    cte_score = '''WITH cte AS (
+   INSERT INTO "username"(username)
+   VALUES (%s)
+   ON CONFLICT (username) DO NOTHING
+   RETURNING username
+)
+SELECT NULL AS result
+WHERE EXISTS (SELECT 1 FROM cte)  
+UNION ALL        
+SELECT score
+FROM "user_score" 
+WHERE username= %s 
+AND NOT EXISTS (SELECT 1 FROM cte);  '''
+
+    cte_level = '''WITH cte AS (
+   INSERT INTO "username"(username)
+   VALUES (%s)
+   ON CONFLICT (username) DO NOTHING
+   RETURNING username
+)
+SELECT NULL AS result
+WHERE EXISTS (SELECT 1 FROM cte)  
+UNION ALL        
+SELECT level
+FROM "user_score" 
+WHERE username= %s 
+AND NOT EXISTS (SELECT 1 FROM cte);  '''
+
 
     del_col = '''ALTER TABLE username DROP COLUMN IF EXISTS id'''
-
-    cur.execute(insrt, (string, ))
+    
+    cur.execute(cte_level, (string, string, ))
     conn.commit()
-
+    return cur.fetchone()

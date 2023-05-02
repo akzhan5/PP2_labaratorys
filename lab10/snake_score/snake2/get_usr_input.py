@@ -39,8 +39,7 @@ def get_username(screen):
                     string += ' '
 
                 if key == 'return': #finished typing 
-                    user_inp(string) 
-                    return string
+                   return [string, str(user_inp(string))]
     
         screen.fill((0,0,0))
         screen.blit(get_user, (10, 200)) 
@@ -48,6 +47,6 @@ def get_username(screen):
         screen.blit(text, (220,200)) 
         pygame.display.update()
  
-get_username(display)
+print(get_username(display))
 
             

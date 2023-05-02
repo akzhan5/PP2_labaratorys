@@ -21,6 +21,9 @@ apple_i= pygame.transform.scale(im,(cell_width, cell_width))
 font_style = pygame.font.SysFont('Times New Roman', 40) 
 font2 = pygame.font.SysFont('Times New Roman', 20)
 
+font = pygame.font.SysFont('Times New Roman', 35) 
+pause = font.render('Game is paused', True, (255,255,255)) 
+
 #classes 
 class Point: 
     def __init__(self, x ,y): 
@@ -173,11 +176,17 @@ clock = pygame.time.Clock()
 def main(): 
     global display, clock 
     wall = Wall(1)
+    run = True
+    l = get_username(display)
+    name = str(l[0])
+    if l[1][1] == 'N': lev= 'No level' 
+    else: lev = l[1][1]
 
-    name = get_username(display)
+    level_score(lev)
+    paused = False
 
     #game loop 
-    while True: 
+    while True:     
         for event in pygame.event.get(): 
             if event.type == QUIT: 
                 pygame.quit()
@@ -194,7 +203,18 @@ def main():
                 if event.key == K_LEFT: 
                     snake.dx = -1 
                     snake.dy = 0
+                #save 
+                if event.key == K_s: 
+                    #save the current state to the database 
+                    score(name, snake.score, wall.level)
+                #pause 
+                if event.key == K_SPACE: 
+                    paused = not paused 
+                    if paused: run = False 
+                    else: run = True
+                
             #after 3s, disappear event is called on the event queue and the current food's new location is generated
+            if snake.score ==0: f = food 
             if event.type == disappear: 
                 if f==food: 
                     #f = random.choice(foods) #random food is chosen after each 3s, however when it is commented the food will change its pos till its eaten by the user
@@ -203,84 +223,88 @@ def main():
                     #f = random.choice(foods) 
                     apple.generateLocation(snake.body, wall.body)
 
-        snake.move() #changes in movement// loc of body parts as points 
+        if run: 
+            snake.move() #changes in movement// loc of body parts as points 
 
-        #check for self collision with its body
-        if snake.collision_self(): 
-            self_coll = font_style.render('Collision with myself', True, (255, 0, 0)) 
-            game_over = font_style.render("GAME OVER", True, (255,0,0))
+             #check for self collision with its body
+            if snake.collision_self(): 
+                self_coll = font_style.render('Collision with myself', True, (255, 0, 0)) 
+                game_over = font_style.render("GAME OVER", True, (255,0,0))
 
-            #add the userscore and level to the table  
-            score(name, snake.score, wall.level)
+                #add the userscore and level to the table  
+                score(name, snake.score, wall.level)
 
-            display.fill(black) 
-            display.blit(self_coll, (50, 100)) 
-            display.blit(game_over, (100, 200)) 
-            pygame.display.update() 
-            time.sleep(2) 
-            pygame.quit() 
+                display.fill(black) 
+                display.blit(self_coll, (50, 100)) 
+                display.blit(game_over, (100, 200)) 
+                pygame.display.update() 
+                time.sleep(2) 
+                pygame.quit() 
 
-        #after the change the screen is filled with black, draw grid is done again and the prev frame disappears, the new with the new pos appears
-        for fo in foods: 
-            if(snake.collision_food(fo)):
-                #apple has more weight than the simple food 
-                if fo==apple: snake.score += 3 
-                else: snake.score +=1 
+            #after the change the screen is filled with black, draw grid is done again and the prev frame disappears, the new with the new pos appears
+            for fo in foods: 
+                if(snake.collision_food(fo)):
+                    #apple has more weight than the simple food 
+                    if fo==apple: snake.score += 3 
+                    else: snake.score +=1 
                 #after the collision the next type of food is randomly chose and its new location is generated
-                f = random.choice(foods)
-                f.generateLocation(snake.body, wall.body)
-                if snake.score % 5==0 and wall.level < 2: 
-                    wall.level +=1 
-                    snake.speed += 0.5
+                    f = random.choice(foods)
+                    f.generateLocation(snake.body, wall.body)
+                    if snake.score % 5==0 and wall.level < 2: 
+                        wall.level +=1 
+                        snake.speed += 0.5
         
-        display.fill(black) #erases the prev pos 
-        drawGrid()
+            display.fill(black) #erases the prev pos 
+            drawGrid()
         
-        snake.draw()
-        #first food is always the simple one, afterwards they are randomly generated
-        if snake.score ==0: f = food #now food must be randomly generated either apple or simple food
-        #after the 1st collision the new food is drawn on its new loc
-        if f == food: 
-            f.draw() 
-        else: 
-            display.blit(f.image, f.rect())
+            snake.draw()
+            #first food is always the simple one, afterwards they are randomly generated
+           #now food must be randomly generated either apple or simple food
+            #after the 1st collision the new food is drawn on its new loc
+            if f == food: 
+                f.draw() 
+            else: 
+                display.blit(f.image, f.rect())
 
-        if snake.score == 5: 
-            wall = Wall(2)
-            snake.speed = 6.5
-        wall.draw() 
+            if snake.score == 5: 
+                wall = Wall(2)
+                snake.speed = 6.5
+            wall.draw() 
 
-        if snake.collision_wall(wall.body): 
-            wall_coll = font_style.render('Wall Collision', True, (255, 0,0)) 
-            game_over = font_style.render("GAME OVER", True, (255,0,0))
+            if snake.collision_wall(wall.body): 
+                wall_coll = font_style.render('Wall Collision', True, (255, 0,0)) 
+                game_over = font_style.render("GAME OVER", True, (255,0,0))
 
             #add the users's score and level to the table 
-            score(name, snake.score, wall.level)
+                score(name, snake.score, wall.level)
 
-            display.fill(black) 
-            display.blit(wall_coll, (100, 100))
-            display.blit(game_over, (100, 200)) 
-            pygame.display.update() 
-            time.sleep(2)
-            pygame.quit()
+                display.fill(black) 
+                display.blit(wall_coll, (100, 100))
+                display.blit(game_over, (100, 200)) 
+                pygame.display.update() 
+                time.sleep(2)
+                pygame.quit()
 
-        if snake.check_for_bound():
-            bound = font_style.render('Out of the area!', True, (255, 0, 0))
-            game_over = font_style.render("GAME OVER", True, (255,0,0))
-            display.fill(black)
-            display.blit(bound, (100, 100))
-            display.blit(game_over, (100,200))
+            if snake.check_for_bound():
+                bound = font_style.render('Out of the area!', True, (255, 0, 0))
+                game_over = font_style.render("GAME OVER", True, (255,0,0))
+                display.fill(black)
+                display.blit(bound, (100, 100))
+                display.blit(game_over, (100,200))
+                pygame.display.update()
+                time.sleep(2) 
+                pygame.quit()
+
+            score_card = font2.render('Score: ' + str(snake.score), True, (255, 255, 255))
+            level_card = font2.render('Level: ' + str(wall.level), True, (255, 255, 255))
+            display.blit(score_card, (10, 0))
+            display.blit(level_card, (10, 20))
             pygame.display.update()
-            time.sleep(2) 
-            pygame.quit()
+            clock.tick(snake.speed) # snake.speed frames per second/ in other words the slower snake moves the less frames are shown in a second    
 
-        score_card = font2.render('Score: ' + str(snake.score), True, (255, 255, 255))
-        level_card = font2.render('Level: ' + str(wall.level), True, (255, 255, 255))
-        display.blit(score_card, (10, 0))
-        display.blit(level_card, (10, 20))
-        pygame.display.update()
-        clock.tick(snake.speed) # snake.speed frames per second/ in other words the slower snake moves the less frames are shown in a second 
-
+        else: 
+            display.fill(black) 
+            display.blit(pause, (220,200))
 #in order to make it easier for us to navigate through the display's coord 
 def drawGrid(): 
     for x in range(0, width, cell_width): 
@@ -321,13 +345,19 @@ def get_username(screen):
                     string += ' '
 
                 if key == 'return': #finished typing 
-                    user_inp(string) 
-                    return string
+                  return [string, str(user_inp(string))]
     
         screen.fill((0,0,0))
         screen.blit(get_user, (10, 200)) 
         text = font.render(string, 1, (255,255,255)) 
         screen.blit(text, (220,200)) 
         pygame.display.update()
+
+def level_score(lev): 
+    display.fill(black) 
+    curr_level = font.render('Current level: ' + str(lev), True, (255,255,255)) 
+    display.blit(curr_level, (30,130)) 
+    pygame.display.update() 
+    pygame.time.wait(2000)
 
 main()

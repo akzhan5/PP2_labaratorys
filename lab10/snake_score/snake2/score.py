@@ -25,8 +25,11 @@ def score(string, score, level):
     insrt3 = '''INSERT INTO USERSCORE_AND_LEVEL(username, score, level) 
     VALUES(%s, %s, %s)'''
 
+    insrt4 = '''INSERT INTO user_score(username, score, level) 
+    VALUES(%s, %s, %s) 
+    ON CONFLICT (username) DO UPDATE SET score = EXCLUDED.score, level = EXCLUDED.level; '''
 
     del_col = '''ALTER TABLE username DROP COLUMN IF EXISTS id'''
 
-    cur.execute(insrt3, (string, score, level))
+    cur.execute(insrt4, (string, score, level) )
     conn.commit()
